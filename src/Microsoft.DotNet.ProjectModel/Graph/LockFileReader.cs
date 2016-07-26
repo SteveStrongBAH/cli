@@ -117,6 +117,7 @@ namespace Microsoft.DotNet.ProjectModel.Graph
             lockFile.Targets = ReadObject(cursor.Value<JObject>("targets"), ReadTarget);
             lockFile.ProjectFileDependencyGroups = ReadObject(cursor.Value<JObject>("projectFileDependencyGroups"), ReadProjectFileDependencyGroup);
             ReadLibrary(cursor.Value<JObject>("libraries"), lockFile);
+            lockFile.PackageFolders = ReadObject(cursor.Value<JObject>("packageFolders"), ReadPackageFolder);
 
             return lockFile;
         }
@@ -150,6 +151,7 @@ namespace Microsoft.DotNet.ProjectModel.Graph
                         Name = name,
                         Version = version,
                         IsServiceable = ReadBool(value, "serviceable", defaultValue: false),
+                        Path = value.Value<string>("path"),
                         Sha512 = ReadString(value["sha512"]),
                         Files = ReadPathArray(value["files"], ReadString)
                     });
@@ -192,6 +194,20 @@ namespace Microsoft.DotNet.ProjectModel.Graph
             target.Libraries = ReadObject(jobject, ReadTargetLibrary);
 
             return target;
+        }
+
+        private LockFilePackageFolder ReadPackageFolder(string property, JToken json)
+        {
+            var jobject = json as JObject;
+            if (jobject == null)
+            {
+                throw FileFormatException.Create("The value type is not an object.", json);
+            }
+
+            var packageFolder = new LockFilePackageFolder();
+            packageFolder.Path = property;
+
+            return packageFolder;
         }
 
         private LockFileTargetLibrary ReadTargetLibrary(string property, JToken json)
